@@ -1,4 +1,10 @@
 # ---------------
+# trec files
+# ---------------
+submission*.json
+.DS_Store
+
+# ---------------
 # project
 # ---------------
 
@@ -6,7 +12,7 @@
 .vscode
 report
 commands.md
-
+.idea/
 
 
 # ---------------

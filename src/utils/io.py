@@ -8,7 +8,7 @@ def read_json(file):
     return dat
 
 
-def read_jsonlines(file, handler = lambda obj: obj):
+def read_jsonlines(file, handler=lambda obj: obj):
     dat = []
     with jsonlines.open(file) as reader:
         for obj in reader:
@@ -19,5 +19,3 @@ def read_jsonlines(file, handler = lambda obj: obj):
 def write_jsonlines(array, file):
     with jsonlines.open(file, mode='w') as writer:
         writer.write_all(array)
-
-
