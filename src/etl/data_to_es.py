@@ -13,8 +13,7 @@ import re
 import pandas as pd
 
 
-
-def doc_generator(reader):
+def doc_generator(reader, index='semanticscholar2019og'):
     for doc in reader.iter(type=dict, skip_invalid=True):
         author_names = []
         author_ids = []
@@ -23,7 +22,7 @@ def doc_generator(reader):
             author_names.append(obj.get('name'))
 
         yield {
-            "_index": 'semanticscholar2019og',
+            "_index": index,
             "_type": "document",
             "_id": doc.get('id'),
             "title": doc.get('title'),
@@ -39,7 +38,7 @@ def doc_generator(reader):
             "journalVolume": doc.get('journalVolume'),
             "sources": doc.get('sources'),
             "doi": doc.get('doi')
-        }
+            }
 
 
 def already_indexed(indexed_files):
@@ -50,36 +49,38 @@ def already_indexed(indexed_files):
         return fp.read().splitlines()
 
 
-es = Elasticsearch([{'host': 'localhost', 'port': '9200', 'timeout': 300}])
+def index_files(rawspath, logdir, es, index):
+    raw_files = glob.glob(rawspath)
+    print(f"Raw files: {raw_files}.")
+    indexed_filepath = os.path.join(logdir, f'indexed_files_2019og.txt')
+    indexed_files = already_indexed(indexed_filepath)
+    print(f"Already indexed: {indexed_files}.")
+    for raw in raw_files:
+        if raw not in indexed_files:
+            index_file(es, raw, index)
 
-logdir = "log/"
+            with open(indexed_filepath, "a") as fp:
+                fp.write(f"{raw}\n")
+                print(f"Indexed contents of {raw}.")
+
+
+def index_file(es, raw, index):
+    print(f"Indexing contents of {raw}.")
+    with jsonlines.open(raw) as reader:
+        progress = tqdm.tqdm(unit="docs", total=1000000)
+        successes = 0
+        for ok, action in helpers.streaming_bulk(es, doc_generator(reader, index), chunk_size=100):
+            progress.update(1)
+            successes += ok
 
 
 
 
 
-rawspath = f'/mnt/c/Users/maaik/Documents/corpus2019/*'
-raw_files = glob.glob(rawspath)
-
-print(f"Raw files: {raw_files}.")
-
-indexed_filepath = os.path.join(logdir, f'indexed_files_2019og.txt')
-indexed_files = already_indexed(indexed_filepath)
-
-print(f"Already indexed: {indexed_files}.")
-for raw in raw_files:
-    if raw not in indexed_files:
-        print(f"Indexing contents of {raw}.")
-        with jsonlines.open(raw) as reader:
-            progress = tqdm.tqdm(unit="docs", total=1000000)
-            successes = 0
-            for ok, action in helpers.streaming_bulk(es, doc_generator(reader), chunk_size=100):
-                progress.update(1)
-                successes += ok
-
-        with open(indexed_filepath, "a") as fp:
-            fp.write(f"{raw}\n")
-            print(f"Indexed contents of {raw}.")
+# es2019 = Elasticsearch([{'host': 'localhost', 'port': '9200', 'timeout': 300}])
+# logdir2019 = "log/"
+# rawspath2019 = f'/mnt/c/Users/maaik/Documents/corpus2019/*'
+# index_files()
 #
 # for file in path.iterdir():
 #     if file.suffix == ".gz":
