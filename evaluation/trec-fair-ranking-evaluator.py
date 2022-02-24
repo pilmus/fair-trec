@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 """
     Evaluation script for the TREC Fair Ranking 2019 track.
@@ -20,8 +20,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 
-
-######## INPUT HANDLING ######## 
+######## INPUT HANDLING ########
 
 
 class FairRankingTask(object):
@@ -32,9 +31,8 @@ class FairRankingTask(object):
         self.groundtruth = self.load_groundtruth_data(groundtruth_file)
         self.document_to_groups = self.load_document_to_groups(group_annotations_file)
 
-        self.all_groups = set([g for groups in self.document_to_groups.values() 
-            for g in groups])
-
+        self.all_groups = set([g for groups in self.document_to_groups.values()
+                               for g in groups])
 
     def load_sequence_data(self, input_file):
         """
@@ -56,7 +54,6 @@ class FairRankingTask(object):
             sequence_data[seq_id].sort()
         return sequence_data
 
-
     def load_document_to_groups(self, input_file):
         document_to_groups = {}
         with open(input_file, 'r') as f_in:
@@ -64,7 +61,6 @@ class FairRankingTask(object):
                 document_to_groups[row[0]] = row[1:]
 
         return document_to_groups
-
 
     def load_groundtruth_data(self, input_file):
         """
@@ -78,10 +74,9 @@ class FairRankingTask(object):
             for line in f_in:
                 query_data = json.loads(line)
                 for rel_data in query_data['documents']:
-                    groundtruth_data[query_data['qid']][rel_data['doc_id']]\
+                    groundtruth_data[query_data['qid']][rel_data['doc_id']] \
                         = rel_data['relevance']
         return groundtruth_data
-
 
     @classmethod
     def stopping_probability(cls, relevance):
@@ -92,7 +87,6 @@ class FairRankingTask(object):
             For future evals, we'll consider makig the stopping probabilities query dependent.
         """
         return 0.7 * relevance
-
 
     def groups_exposure(self, seq_id, submission, gamma):
         #   The sums are aggregated differently than in the partcicipant instructions
@@ -114,13 +108,12 @@ class FairRankingTask(object):
                     continue
                 for g in self.document_to_groups[doc_id]:
                     g_exps[g] += (gamma ** i) * stopped_until_now * \
-                        FairRankingTask.stopping_probability(self.groundtruth[q_id][doc_id])
-                stopped_until_now *= (1 - 
-                    FairRankingTask.stopping_probability(self.groundtruth[q_id][doc_id]))
+                                 FairRankingTask.stopping_probability(self.groundtruth[q_id][doc_id])
+                stopped_until_now *= (1 -
+                                      FairRankingTask.stopping_probability(self.groundtruth[q_id][doc_id]))
 
         total = sum(g_exps.values())
         return dict([(g, exp / total) for g, exp in g_exps.items()])
-
 
     def groups_relevance(self, seq_id, submission):
         #   The sums are aggregated differently than in the partcicipant instructions
@@ -147,12 +140,10 @@ class FairRankingTask(object):
         return dict([(g, rel / total) for g, rel in g_rels.items()])
 
 
-
 class FairRankingSubmission(object):
 
     def __init__(self, run_file):
         self.rankings = self.load_submission(run_file)
-
 
     def load_submission(self, input_file):
         """
@@ -165,19 +156,17 @@ class FairRankingSubmission(object):
         with open(input_file, 'r') as f_in:
             for line in f_in:
                 ranking_data = json.loads(line)
-                #note: this strips the original query ID, as it will be read from the groundtruth data
+                # note: this strips the original query ID, as it will be read from the groundtruth data
                 # to avoid manipulations
                 seq_id, q_num = ranking_data['q_num'].split('.')
                 submission_data[int(seq_id)][int(q_num)] = ranking_data['ranking']
         return submission_data
 
 
-
-######## UTILITY METRICS ######## 
+######## UTILITY METRICS ########
 
 
 def expected_utility(ranking, groundtruth, gamma):
-
     """
         Assumes ranking is a participant-sorted list of documents
 
@@ -193,14 +182,13 @@ def expected_utility(ranking, groundtruth, gamma):
 
 
 def avg_expected_utility(seq_id, task, submission, gamma):
-
     """
         Assumes sequence is sorted by sequence number, 
         then by the query number within the sequence.
     """
 
     return sum([expected_utility(
-        submission.rankings[seq_id][q_num], task.groundtruth[q_id], gamma) 
+        submission.rankings[seq_id][q_num], task.groundtruth[q_id], gamma)
         for q_num, q_id in task.sequence[seq_id]]) / len(task.sequence[seq_id])
 
 
@@ -209,8 +197,8 @@ def avg_expected_utility(seq_id, task, submission, gamma):
 def l2_loss(seq_id, task, submission, gamma):
     groups_exposure = task.groups_exposure(seq_id, submission, gamma)
     groups_relevance = task.groups_relevance(seq_id, submission)
-    return math.sqrt(sum([(groups_exposure[g] - groups_relevance[g])**2 
-        for g in task.all_groups]))
+    return math.sqrt(sum([(groups_exposure[g] - groups_relevance[g]) ** 2
+                          for g in task.all_groups]))
 
 
 if __name__ == '__main__':
@@ -232,18 +220,18 @@ if __name__ == '__main__':
     parser.add_argument('--group_definition', help='keyword defininf group definitions')
     args = parser.parse_args()
 
-
     task = FairRankingTask(args.query_sequence_file, args.groundtruth_file, args.group_annotations_file)
-
 
     run_files_prefix = 'fairRuns/'
     run_files = [
-        'submission_lambdamart-full18.json',
-        'submission_lambdamart-full19.json',
+        'submission_lambdamart-training-sequence-1000.tsv.json',
+        'submission_lambdamart-training-sequence-1000-1-index.tsv.json',
+        'submission_lambdamart-training-sequence-full.tsv.json',
+        'submission_lambdamart-training-sequence-full-1-index.tsv.json',
 
         # 'example_run_name_1', 
         # 'example_run_name_2', 
-    ]
+        ]
 
     performance_all_utility = defaultdict(list)
     performance_team_utility = defaultdict(dict)
@@ -264,27 +252,28 @@ if __name__ == '__main__':
 
     for run in run_files:
         with open('eval_results/%s/%s' % (args.group_definition, run), 'w') as f_out:
-            f_out.write('seq_id\tutil-min\tutil-max\tutil-mean\tutil-run\tunfairness-min\tunfairness-max\tunfairness-mean\tunfairness-run\n')
+            f_out.write(
+                'seq_id\tutil-min\tutil-max\tutil-mean\tutil-run\tunfairness-min\tunfairness-max\tunfairness-mean'
+                '\tunfairness-run\n')
             for seq_id in sorted(task.sequence):
                 f_out.write('%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n' % (
                     seq_id,
                     min(performance_all_utility[seq_id]),
                     max(performance_all_utility[seq_id]),
                     mean(performance_all_utility[seq_id]),
-                    performance_team_utility[run][seq_id], # run's utility
+                    performance_team_utility[run][seq_id],  # run's utility
                     min(performance_all_fairness[seq_id]),
                     max(performance_all_fairness[seq_id]),
                     mean(performance_all_fairness[seq_id]),
-                    performance_team_fairness[run][seq_id], # run's unfairness
+                    performance_team_fairness[run][seq_id],  # run's unfairness
                     ))
 
-
-    colormap = plt.cm.gist_ncar 
+    colormap = plt.cm.gist_ncar
     colors = [colormap(i) for i in np.linspace(0, 0.9, len(run_files))]
     for i, run in enumerate(run_files):
-        plt.scatter(x=[mean(performance_team_fairness[run].values())], 
-            y=[mean(performance_team_utility[run].values())], c=[colors[i]],
-            label=run, s=50)
+        plt.scatter(x=[mean(performance_team_fairness[run].values())],
+                    y=[mean(performance_team_utility[run].values())], c=[colors[i]],
+                    label=run, s=50)
 
     plt.legend(loc='lower right', fontsize='xx-small')
     plt.xlabel("Unfairness: L2")
@@ -293,5 +282,3 @@ if __name__ == '__main__':
     # fig = plt.figure()
     plt.savefig('plots/%s/performance-all.pdf' % args.group_definition)
     # plt.show()
-
-
