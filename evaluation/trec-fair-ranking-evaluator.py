@@ -4,7 +4,8 @@
 """
     Evaluation script for the TREC Fair Ranking 2019 track.
 """
-
+import glob
+import os
 from collections import defaultdict
 from functools import partial
 from statistics import mean
@@ -224,13 +225,11 @@ if __name__ == '__main__':
 
     run_files_prefix = 'fairRuns/'
     run_files = [
-        'submission_lambdamart-training-sequence-1000.tsv.json',
-        'submission_lambdamart-training-sequence-1000-1-index.tsv.json',
-        'submission_lambdamart-training-sequence-full.tsv.json',
-        'submission_lambdamart-training-sequence-full-1-index.tsv.json',
-
-        # 'example_run_name_1', 
-        # 'example_run_name_2', 
+        'submission_lambdamart-0-training-sequence-full.tsv-noseed.json',
+        'submission_lambdamart-1-training-sequence-full.tsv-noseed.json',
+        'submission_lambdamart-2-training-sequence-full.tsv-noseed.json',
+        'submission_lambdamart-3-training-sequence-full.tsv-noseed.json',
+        'submission_lambdamart-4-training-sequence-full.tsv-noseed.json',
         ]
 
     performance_all_utility = defaultdict(list)
@@ -282,3 +281,4 @@ if __name__ == '__main__':
     # fig = plt.figure()
     plt.savefig('plots/%s/performance-all.pdf' % args.group_definition)
     # plt.show()
+

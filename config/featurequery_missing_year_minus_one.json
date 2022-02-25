@@ -1,0 +1,31 @@
+{
+    "query": {
+        "bool": {
+            "filter": [
+                {
+                    "terms": {
+                        "_id": "doc_ids"
+                    }
+                },
+                {
+                    "sltr": {
+                        "_name": "logged_featureset_bonart_missing_year_null",
+                        "featureset": "features_bonart_missing_year_null",
+                        "params": {
+                            "keywords": "query"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "ext": {
+        "ltr_log": {
+            "log_specs": {
+                "name": "log_entry_bonart_missing_year_null",
+                "named_query": "logged_featureset_bonart_missing_year_null",
+                "missing_as_zero": true
+            }
+        }
+    }
+}
